@@ -1,0 +1,46 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context="com.example.tntapp.MainActivity"
+    tools:ignore="MergeRootFrame" >
+
+    <FrameLayout
+        android:id="@+id/container"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="0.85" >
+    </FrameLayout>
+
+
+    <RelativeLayout
+        android:id="@+id/tabs"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="0.15"
+        android:layout_alignParentBottom="true"
+        android:gravity="bottom" >
+
+        <LinearLayout
+            android:id="@+id/lilLayout"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/abc_search_url_text_pressed"
+            android:orientation="horizontal" >
+        </LinearLayout>
+    </RelativeLayout>
+    
+    <EditText
+        android:id="@+id/input"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        android:singleLine="true"
+        android:imeActionId="@+id/action_sign_in"
+    	android:imeActionLabel="Meow"
+        android:imeOptions="actionDone"
+        android:ems="10" >
+    </EditText>
+
+</LinearLayout>
