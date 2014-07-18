@@ -32,9 +32,9 @@
             android:layout_marginLeft="8dp"
             android:layout_marginRight="8dp"
             android:layout_weight="0.6"
+            android:focusable="true"
             android:gravity="center"
             android:text=""
-            android:focusable="true"
             android:textColor="@color/white"
             android:textSize="16sp"
             android:textStyle="bold" />
@@ -47,29 +47,36 @@
             android:layout_marginRight="8dp"
             android:layout_weight="0.2"
             android:gravity="right"
-            android:visibility="invisible"
             android:text="menu"
-            android:textColor="@color/white" />
+            android:textColor="@color/white"
+            android:visibility="invisible" />
     </LinearLayout>
 
-    <FrameLayout
+    <android.support.v4.widget.SwipeRefreshLayout
+        android:id="@+id/swipe_container"
+        android:layout_below="@id/header"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_below="@id/header"
         android:layout_weight="0.9" >
 
-        <WebView
-            android:id="@+id/viewer"
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent" />
+            android:layout_height="match_parent"
+             >
 
-        <LinearLayout
-            android:id="@+id/popup_menu"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:orientation="vertical" >
-        </LinearLayout>
-    </FrameLayout>
+            <WebView
+                android:id="@+id/viewer"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+            <LinearLayout
+                android:id="@+id/popup_menu"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:orientation="vertical" >
+            </LinearLayout>
+        </FrameLayout>
+    </android.support.v4.widget.SwipeRefreshLayout>
 
 </LinearLayout>

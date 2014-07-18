@@ -17,4 +17,5 @@
     <string name="volume_up">+</string>
     <string name="volume_down">-</string>
     <string name="exit">Exit</string>
+    <string name="description">Element of control</string>
 </resources>

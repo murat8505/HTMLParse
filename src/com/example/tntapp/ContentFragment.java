@@ -13,6 +13,8 @@ import android.os.Handler;
 import android.provider.Settings.Secure;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
+import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v4.widget.SwipeRefreshLayout.OnRefreshListener;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Gravity;
@@ -21,24 +23,21 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnFocusChangeListener;
-import android.view.ViewGroup.LayoutParams;
 import android.view.ViewGroup;
+import android.view.ViewGroup.LayoutParams;
 import android.view.animation.Animation;
 import android.view.animation.Animation.AnimationListener;
 import android.view.animation.AnimationUtils;
 import android.view.inputmethod.InputMethodManager;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
-import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.TextView.OnEditorActionListener;
-import android.widget.Toast;
 
 import com.example.Objects.Menu;
 import com.example.Objects.Screen;
@@ -63,6 +62,7 @@ public class ContentFragment extends Fragment implements OnClickListener,
 	int mVisible = View.VISIBLE;
 	static int TIMEOUT = 3000;
 	int mGone = View.GONE;
+	SwipeRefreshLayout swipeLayout;
 	boolean isMenuOpen = false, mInputShow = false;
 
 	private Animation popupShow;
@@ -77,7 +77,7 @@ public class ContentFragment extends Fragment implements OnClickListener,
 		mContext = getActivity().getApplicationContext();
 		progress = MyProgressDialog.newInstnce();
 		super.onCreate(savedInstanceState);
-		setRetainInstance(true);
+		//setRetainInstance(true);
 	}
 
 	@Override
@@ -127,9 +127,33 @@ public class ContentFragment extends Fragment implements OnClickListener,
 
 		imm = (InputMethodManager) getActivity().getSystemService(
 				Context.INPUT_METHOD_SERVICE);
-
+		swipeLayout = (SwipeRefreshLayout) v.findViewById(R.id.swipe_container);
+        swipeLayout.setColorScheme(android.R.color.holo_blue_bright, 
+                android.R.color.holo_green_light, 
+                android.R.color.holo_orange_light, 
+                android.R.color.holo_red_light);
 		// title.setText(viewer.getTitle());
 		return v;
+	}
+	
+	@Override
+	public void onViewCreated(View view, Bundle savedInstanceState) {
+		// TODO Auto-generated method stub
+		swipeLayout.setOnRefreshListener(new OnRefreshListener() {
+			
+			@Override
+			public void onRefresh() {
+				new Handler().postDelayed(new Runnable() {
+					@Override
+					public void run() {
+						swipeLayout.setRefreshing(false);
+						swipeLayout.setEnabled(false);
+					}
+				}, 4000);
+				
+			}
+		});
+		super.onViewCreated(view, savedInstanceState);
 	}
 
 	public int getTabId() {
@@ -255,7 +279,8 @@ public class ContentFragment extends Fragment implements OnClickListener,
 
 	public void showVideo(String path) {
 		// path = path.substring(0, path.indexOf(","));
-		Intent intent = new Intent(getActivity(), VideoActivity.class);
+		//this.path = path;
+		Intent intent = new Intent(getActivity(), VideoPlayerActivity.class);
 		intent.putExtra("data", path);
 		startActivity(intent);
 	}
