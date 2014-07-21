@@ -57,6 +57,7 @@
         android:layout_below="@id/header"
         android:layout_width="match_parent"
         android:layout_height="0dp"
+        android:background="#3a3f45"
         android:layout_weight="0.9" >
 
         <FrameLayout
@@ -64,7 +65,7 @@
             android:layout_height="match_parent"
              >
 
-            <WebView
+            <com.example.tntapp.ObservableWebView
                 android:id="@+id/viewer"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent" />

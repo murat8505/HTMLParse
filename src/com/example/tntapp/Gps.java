@@ -28,7 +28,11 @@ public class Gps {
 	private static final long MINIMUM_TIME_BETWEEN_UPDATES = 1000; // в мс
 
 	public static Gps getInstance(Context _context) {
+		try {
 		context = _context.getApplicationContext();
+		} catch (RuntimeException e ) {
+			return null;
+		}
 		if (instance == null)
 			instance = new Gps();
 		else

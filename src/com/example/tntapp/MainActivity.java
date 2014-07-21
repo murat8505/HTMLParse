@@ -13,7 +13,9 @@ import android.support.v7.internal.widget.ListPopupWindow;
 import android.view.Gravity;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.webkit.WebView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -27,16 +29,33 @@ import com.squareup.picasso.Picasso;
 
 public class MainActivity extends ActionBarActivity implements OnClickListener, onChangeTab {
 	Screen source;
-	public static Activity mActivity;
-	int matchParent = LinearLayout.LayoutParams.MATCH_PARENT;
-	FragmentTransaction fTrans;
-	LinearLayout ll;
-	DialogFragment menuDialog;
+	public static Activity 		mActivity;
+	int 						matchParent = LinearLayout.LayoutParams.MATCH_PARENT;
+	FragmentTransaction 		fTrans;
+	LinearLayout 				ll;
+	DialogFragment 				menuDialog;
+	ConnectionDetector 			cd;
 	
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+	private boolean checkNetwork(final Bundle savedInstanceState) {
+		if (!cd.isConnectingToInternet()) {
+            // Internet Connection is not present
+        	setContentView(R.layout.activity_connect_error);
+        	Button b = (Button)findViewById(R.id.refresh_ntwrk);
+        	b.setOnClickListener(new OnClickListener() {
+				
+				@Override
+				public void onClick(View v) {
+					if (cd.isConnectingToInternet())
+						networkOn(savedInstanceState);
+				}
+			});
+            return false;
+        }
+		return true;
+	}
+	
+	private void networkOn(Bundle savedInstanceState) {
+		setContentView(R.layout.activity_main);
         source = Screen.getInstance(this);
         mActivity = this;
         menuDialog = new MenuFragment();
@@ -55,6 +74,17 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 			fTrans.add(R.id.container, source.getSelectTab().getFragment());
 			fTrans.commit();
         }
+	}
+	
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        cd = new ConnectionDetector(getApplicationContext());
+        if (!checkNetwork(savedInstanceState))
+        	return;
+        networkOn(savedInstanceState);
+        // Check if Internet present
+        
     }
     
 
@@ -149,8 +179,11 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 				fTrans.detach(currentFrag);
 				fTrans.attach(currentFrag);
 			}
-		} else
+		} else {
+			WebView viewer = (WebView)currentFrag.getView().findViewById(R.id.viewer);
+			viewer.stopLoading();
 			fTrans.replace(R.id.container, source.getSelectTab().getFragment());
+		}
 		fTrans.commit();
 		rePaintTabs();
 		
@@ -171,4 +204,5 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 		menuDialog.setArguments(b);
 		menuDialog.show(getSupportFragmentManager(), "menuDialog");
 	}
+
 }

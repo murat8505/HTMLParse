@@ -1,5 +1,6 @@
 package com.example.tntapp;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 
 import android.app.Activity;
@@ -42,33 +43,33 @@ import android.widget.TextView.OnEditorActionListener;
 import com.example.Objects.Menu;
 import com.example.Objects.Screen;
 import com.example.Objects.Tab;
+import com.example.tntapp.ObservableWebView.OnScrollChangedCallback;
 
 public class ContentFragment extends Fragment implements OnClickListener,
-		AnimationListener {
-	Tab tab;
-	Screen src;
-	EditText input;
-	RelativeLayout tabs_lay;
-	String newTitle;
-	DialogFragment progress;
-	InputMethodManager imm;
-	Context mContext;
-	private TextView title;
-	private TextView back, menu_btn;
-	private WebView viewer;
-	private final static String APP = "app";
-	final String LOG_TAG = "myLogs";
-	static boolean isReady = false;
-	int mVisible = View.VISIBLE;
-	static int TIMEOUT = 3000;
-	int mGone = View.GONE;
-	SwipeRefreshLayout swipeLayout;
-	boolean isMenuOpen = false, mInputShow = false;
+		AnimationListener, OnFocusChangeListener {
+	Tab 							tab;
+	Screen 							src;
+	EditText 						input;
+	RelativeLayout 					tabs_lay;
+	String 							newTitle;
+	DialogFragment 					progress;
+	InputMethodManager 				imm;
+	Context 						mContext;
+	private TextView 				title;
+	private TextView 				back, menu_btn;
+	private ObservableWebView 		viewer;
+	private final static String 	APP = "app";
+	final String 					LOG_TAG = "myLogs";
+	static boolean 					isReady = false;
+	int 							mVisible = View.VISIBLE;
+	static int 						TIMEOUT = 3000;
+	int 							mGone = View.GONE;
+	SwipeRefreshLayout 				swipeLayout;
+	boolean 						isMenuOpen = false, mInputShow = false, mGps = false;
+	private Animation 				popupShow;
+	private Animation 				popupHide;
 
-	private Animation popupShow;
-	private Animation popupHide;
-
-	private LinearLayout linearLayoutPopup;
+	private LinearLayout 			linearLayoutPopup;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -77,7 +78,7 @@ public class ContentFragment extends Fragment implements OnClickListener,
 		mContext = getActivity().getApplicationContext();
 		progress = MyProgressDialog.newInstnce();
 		super.onCreate(savedInstanceState);
-		//setRetainInstance(true);
+		setRetainInstance(true);
 	}
 
 	@Override
@@ -87,7 +88,7 @@ public class ContentFragment extends Fragment implements OnClickListener,
 		isReady = false;
 		title = (TextView) v.findViewById(R.id.title);
 		back = (TextView) v.findViewById(R.id.back);
-		viewer = (WebView) v.findViewById(R.id.viewer);
+		viewer = (ObservableWebView) v.findViewById(R.id.viewer);
 		menu_btn = (TextView) v.findViewById(R.id.menu);
 		input = (EditText) getActivity().findViewById(R.id.input);
 		tabs_lay = (RelativeLayout) getActivity().findViewById(R.id.tabs);
@@ -110,6 +111,7 @@ public class ContentFragment extends Fragment implements OnClickListener,
 		back.setOnClickListener(this);
 		menu_btn.setOnClickListener(this);
 		title.setOnClickListener(this);
+		title.setFocusable(true);
 		viewer.setWebViewClient(new MyWebViewClient());
 
 		if (tab.getSizeOfUrl() > 0) {
@@ -128,10 +130,20 @@ public class ContentFragment extends Fragment implements OnClickListener,
 		imm = (InputMethodManager) getActivity().getSystemService(
 				Context.INPUT_METHOD_SERVICE);
 		swipeLayout = (SwipeRefreshLayout) v.findViewById(R.id.swipe_container);
-        swipeLayout.setColorScheme(android.R.color.holo_blue_bright, 
-                android.R.color.holo_green_light, 
-                android.R.color.holo_orange_light, 
-                android.R.color.holo_red_light);
+		/*Float mDistanceToTriggerSync = (float) 500; 
+
+		try {
+		    // Set the internal trigger distance using reflection.
+		    Field field = SwipeRefreshLayout.class.getDeclaredField("mDistanceToTriggerSync");
+		    field.setAccessible(true);
+		    field.setFloat(swipeLayout, mDistanceToTriggerSync);
+		} catch (Exception e) {
+		    e.printStackTrace();
+		}*/
+        swipeLayout.setColorScheme(android.R.color.holo_blue_dark, 
+                android.R.color.holo_green_dark, 
+                android.R.color.holo_orange_dark, 
+                android.R.color.holo_red_dark);
 		// title.setText(viewer.getTitle());
 		return v;
 	}
@@ -139,6 +151,14 @@ public class ContentFragment extends Fragment implements OnClickListener,
 	@Override
 	public void onViewCreated(View view, Bundle savedInstanceState) {
 		// TODO Auto-generated method stub
+		viewer.setOnScrollChangedCallback(new OnScrollChangedCallback() {
+			
+			@Override
+			public void onScroll(int l, int t) {
+				// TODO Auto-generated method stub
+					swipeLayout.setEnabled(t>0 ? false : true);
+			}
+		});
 		swipeLayout.setOnRefreshListener(new OnRefreshListener() {
 			
 			@Override
@@ -147,7 +167,6 @@ public class ContentFragment extends Fragment implements OnClickListener,
 					@Override
 					public void run() {
 						swipeLayout.setRefreshing(false);
-						swipeLayout.setEnabled(false);
 					}
 				}, 4000);
 				
@@ -191,12 +210,15 @@ public class ContentFragment extends Fragment implements OnClickListener,
 		if (command.getHost().equals("showInput")) {
 			showInput(command);
 		}
-
 	}
+	
 
 	public void showInput(final Uri uri) {
+		/*if (mInputShow)
+			return;*/
 		input.setVisibility(mVisible);
 		tabs_lay.setVisibility(mGone);
+		mInputShow = true;
 		// getActivity().getWindow().setSoftInputMode(LayoutParams.SOFT_INPUT_STATE_VISIBLE);
 		imm.toggleSoftInput(InputMethodManager.SHOW_IMPLICIT, 0);
 		input.requestFocus();
@@ -227,13 +249,16 @@ public class ContentFragment extends Fragment implements OnClickListener,
 				input.setText("");
 				input.setVisibility(mGone);
 				tabs_lay.setVisibility(mVisible);
+				mInputShow = false;
 				return false;
 			}
 		});
 	}
 
 	public void getGeolocation(Uri uri) {
-		Gps.getInstance(getActivity());
+		mGps = true;
+		if (Gps.getInstance(getActivity()) == null)
+			return;
 		String function = null;
 		if (uri.getQueryParameter("_reject") != null) {
 			function = "javascript:" + uri.getQueryParameter("_reject") + "('"
@@ -246,6 +271,7 @@ public class ContentFragment extends Fragment implements OnClickListener,
 			viewer.loadUrl(function);
 		}
 	}
+	
 
 	public void getDeviceId(Uri uri) {
 		String function = null;
@@ -350,7 +376,6 @@ public class ContentFragment extends Fragment implements OnClickListener,
 
 	public interface onChangeTab {
 		public void changeTab(Tab tab);
-
 		public void showMenu();
 	}
 
@@ -382,6 +407,8 @@ public class ContentFragment extends Fragment implements OnClickListener,
 
 	@Override
 	public void onClick(View v) {
+		if (mInputShow)
+			viewer.requestFocus();
 		switch (v.getId()) {
 		case R.id.back:
 			tab.popUrl();
@@ -567,5 +594,11 @@ public class ContentFragment extends Fragment implements OnClickListener,
 			LoadError();
 		}
 
+	}
+
+	@Override
+	public void onFocusChange(View v, boolean hasFocus) {
+		// TODO Auto-generated method stub
+		Log.d("logs", "View: "+v.getId()+" Focus: "+hasFocus);
 	}
 }

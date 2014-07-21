@@ -18,4 +18,5 @@
     <string name="volume_down">-</string>
     <string name="exit">Exit</string>
     <string name="description">Element of control</string>
+    <string name="network_off">Отсутствует соединение с интернетом</string>
 </resources>
