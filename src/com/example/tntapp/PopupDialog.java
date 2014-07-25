@@ -13,6 +13,7 @@ import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
+import com.androidquery.AQuery;
 import com.squareup.picasso.Picasso;
 
 @SuppressLint("ValidFragment") public class PopupDialog extends DialogFragment {
@@ -29,6 +30,7 @@ import com.squareup.picasso.Picasso;
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 			Bundle savedInstanceState) {
+		AQuery aq = new AQuery(getActivity()); 
 		View v = inflater.inflate(R.layout.dialog_popup, null);
 		ImageView img = (ImageView) v.findViewById(R.id.image);
 		getDialog().getWindow().getAttributes().windowAnimations=R.style.DialogAnimation;
@@ -39,7 +41,8 @@ import com.squareup.picasso.Picasso;
 				dismiss();
 			}
 		});
-		Picasso.with(getActivity()).load(Uri.parse(getArguments().getString("splash"))).into(img);
+		aq.id(img).image(getArguments().getString("splash"));
+		//Picasso.with(getActivity()).load(Uri.parse(getArguments().getString("splash"))).into(img);
 		return v;
 	}
 	

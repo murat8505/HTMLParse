@@ -40,7 +40,8 @@ public class Config  {
 	
 	private Config(Context context) {
 		try {
-			mResult = new MyAsync().execute(context.getString(R.string.config_link)).get();
+			MyAsync config = new MyAsync();
+			mResult = config.execute(context.getString(R.string.config_link)).get();
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

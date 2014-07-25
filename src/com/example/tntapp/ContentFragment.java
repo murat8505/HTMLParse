@@ -2,13 +2,16 @@ package com.example.tntapp;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
-
+import org.json.JSONObject;
+import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.Settings.Secure;
@@ -26,170 +29,206 @@ import android.view.View.OnClickListener;
 import android.view.View.OnFocusChangeListener;
 import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
-import android.view.animation.Animation;
-import android.view.animation.Animation.AnimationListener;
-import android.view.animation.AnimationUtils;
 import android.view.inputmethod.InputMethodManager;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.LinearLayout;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.TextView.OnEditorActionListener;
-
+import com.androidquery.AQuery;
+import com.androidquery.auth.FacebookHandle;
+import com.androidquery.callback.AjaxStatus;
 import com.example.Objects.Menu;
 import com.example.Objects.Screen;
 import com.example.Objects.Tab;
 import com.example.tntapp.ObservableWebView.OnScrollChangedCallback;
+import com.example.widget.AnimatedLineLayout;
 
-public class ContentFragment extends Fragment implements OnClickListener,
-		AnimationListener, OnFocusChangeListener {
-	Tab 							tab;
-	Screen 							src;
-	EditText 						input;
-	RelativeLayout 					tabs_lay;
-	String 							newTitle;
-	DialogFragment 					progress;
-	InputMethodManager 				imm;
-	Context 						mContext;
-	private TextView 				title;
-	private TextView 				back, menu_btn;
-	private ObservableWebView 		viewer;
-	private final static String 	APP = "app";
-	final String 					LOG_TAG = "myLogs";
-	static boolean 					isReady = false;
-	int 							mVisible = View.VISIBLE;
-	static int 						TIMEOUT = 3000;
-	int 							mGone = View.GONE;
-	SwipeRefreshLayout 				swipeLayout;
-	boolean 						isMenuOpen = false, mInputShow = false, mGps = false;
-	private Animation 				popupShow;
-	private Animation 				popupHide;
-
-	private LinearLayout 			linearLayoutPopup;
+public class ContentFragment extends Fragment implements OnClickListener {
+	private Tab tab;
+	private Screen src;
+	private EditText input;
+	private RelativeLayout tabs_lay;
+	private DialogFragment progress;
+	private InputMethodManager imm;
+	private TextView title;
+	private ObservableWebView viewer;
+	private final static String APP = "app";
+	final String LOG_TAG = "myLogs";
+	private static boolean isReady = false;
+	private final int mVisible = View.VISIBLE, mGone = View.GONE,
+			mBackId = R.id.back, mTitleId = R.id.title;
+	private static int TIMEOUT = 1500;
+	private SwipeRefreshLayout swipeLayout;
+	private boolean mInputShow = false, mGps = false, mRefreshable;
+	private AnimatedLineLayout header;
+	private AnimatedLineLayout linearLayoutPopup;
+	private AQuery aq;
+	private FacebookHandle handle;
+	private final static String APP_ID = "300089453493860";
+	private final static String PERMISSIONS = "read_stream,read_friendlists,manage_friendlists,manage_notifications,publish_stream,publish_checkins,offline_access,user_photos,user_likes,user_groups,friends_photos";
+	ImageView myImageView;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		src = Screen.getInstance(getActivity());
 		tab = src.getSelectTab();
-		mContext = getActivity().getApplicationContext();
+		getActivity().getApplicationContext();
 		progress = MyProgressDialog.newInstnce();
+		handle = new FacebookHandle(getActivity(), APP_ID, PERMISSIONS);
 		super.onCreate(savedInstanceState);
 		setRetainInstance(true);
 	}
 
-	@Override
+	@TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH) @SuppressLint("SetJavaScriptEnabled") @Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 			Bundle savedInstanceState) {
 		View v = inflater.inflate(R.layout.fragment_content, null);
+		aq = new AQuery(getActivity(), v);
+		aq.id(R.id.title_layout).clicked(this);
 		isReady = false;
 		title = (TextView) v.findViewById(R.id.title);
-		back = (TextView) v.findViewById(R.id.back);
+		aq.id(mBackId).clicked(this);
+		aq.id(mTitleId).clicked(this);
 		viewer = (ObservableWebView) v.findViewById(R.id.viewer);
-		menu_btn = (TextView) v.findViewById(R.id.menu);
+		myImageView = (ImageView) v.findViewById(R.id.imageView1);
 		input = (EditText) getActivity().findViewById(R.id.input);
 		tabs_lay = (RelativeLayout) getActivity().findViewById(R.id.tabs);
-		LinearLayout header = (LinearLayout) v.findViewById(R.id.header);
-		linearLayoutPopup = (LinearLayout) v.findViewById(R.id.popup_menu);
-		linearLayoutPopup.setVisibility(View.INVISIBLE); // убираем с экрана
+		header = (AnimatedLineLayout) v.findViewById(R.id.header);
+		swipeLayout = (SwipeRefreshLayout) v.findViewById(R.id.swipe_container);
+		linearLayoutPopup = (AnimatedLineLayout) v
+				.findViewById(R.id.popup_menu);
+		linearLayoutPopup.setVisibility(View.INVISIBLE);
+		linearLayoutPopup.setVisible(false);
 		linearLayoutPopup.setBackgroundColor(src.getTabBarBgColor());
 		ConstructMenu(src.getSelectTab().getMenu());
-
-		popupShow = AnimationUtils.loadAnimation(getActivity(),
-				R.anim.menu_show);
-		popupShow.setAnimationListener(this);
-		popupHide = AnimationUtils.loadAnimation(getActivity(),
-				R.anim.menu_hide);
-		popupHide.setAnimationListener(this);
-		isMenuOpen = false;
 		header.setBackgroundColor(src.getHeaderColor());
 		header.setOnClickListener(this);
+		header.setHeader(true);
 		viewer.setOnClickListener(this);
-		back.setOnClickListener(this);
-		menu_btn.setOnClickListener(this);
-		title.setOnClickListener(this);
-		title.setFocusable(true);
 		viewer.setWebViewClient(new MyWebViewClient());
 
-		if (tab.getSizeOfUrl() > 0) {
-			viewer.loadUrl(tab.getLastUrl());
-			showBack();
-		} else if (tab.getSecondUrl() != null) {
-			viewer.loadUrl(tab.getSecondUrl());
-			title.setText(tab.getCurrentTitle());
-		} else {
-			viewer.loadUrl(tab.getDomain() + tab.getUrl());
-			title.setText(resizeTitle(tab.getTitle()));
-		}
+		chooseLoad();
 
 		viewer.getSettings().setJavaScriptEnabled(true);
 
 		imm = (InputMethodManager) getActivity().getSystemService(
 				Context.INPUT_METHOD_SERVICE);
-		swipeLayout = (SwipeRefreshLayout) v.findViewById(R.id.swipe_container);
-		/*Float mDistanceToTriggerSync = (float) 500; 
 
-		try {
-		    // Set the internal trigger distance using reflection.
-		    Field field = SwipeRefreshLayout.class.getDeclaredField("mDistanceToTriggerSync");
-		    field.setAccessible(true);
-		    field.setFloat(swipeLayout, mDistanceToTriggerSync);
+		int mProgressBarHeight =  105;
+
+		try { // Set the internal trigger distance using reflection. Field
+			Field field = SwipeRefreshLayout.class
+					.getDeclaredField("mProgressBarHeight");
+			field.setAccessible(true);
+			field.setInt(swipeLayout, mProgressBarHeight);
 		} catch (Exception e) {
-		    e.printStackTrace();
-		}*/
-        swipeLayout.setColorScheme(android.R.color.holo_blue_dark, 
-                android.R.color.holo_green_dark, 
-                android.R.color.holo_orange_dark, 
-                android.R.color.holo_red_dark);
+			e.printStackTrace();
+		}
+
+		swipeLayout
+				.setColorScheme(android.R.color.holo_blue_dark,
+						android.R.color.holo_green_dark,
+						android.R.color.holo_orange_dark,
+						android.R.color.holo_red_dark);
 		// title.setText(viewer.getTitle());
 		return v;
 	}
-	
+
+	private void chooseLoad() {
+		if (tab.getSizeOfUrl() > 0) {
+			loadPage(tab.getLastUrl());
+		} else if (tab.getSecondUrl() != null) {
+			loadPage(tab.getSecondUrl());
+			aq.id(mTitleId).text(tab.getCurrentTitle());
+		} else {
+			loadPage(tab.getDomain() + tab.getUrl());
+			aq.id(mTitleId).text(resizeTitle(tab.getTitle()));
+		}
+	}
+
+	private int oldT;
+
 	@Override
 	public void onViewCreated(View view, Bundle savedInstanceState) {
-		// TODO Auto-generated method stub
 		viewer.setOnScrollChangedCallback(new OnScrollChangedCallback() {
-			
+
 			@Override
 			public void onScroll(int l, int t) {
-				// TODO Auto-generated method stub
-					swipeLayout.setEnabled(t>0 ? false : true);
+				hideMenu();
+				if (t < oldT) {
+					// showHideHeader(true);
+					header.show();
+				} else if (t > oldT) {
+					// showHideHeader(false);
+					if (!swipeLayout.isRefreshing())
+						header.hide();
+				}
+				if (mRefreshable)
+					swipeLayout.setEnabled((t > 0) ? false : true);
+				oldT = t;
 			}
+
 		});
 		swipeLayout.setOnRefreshListener(new OnRefreshListener() {
-			
+
 			@Override
 			public void onRefresh() {
-				new Handler().postDelayed(new Runnable() {
-					@Override
-					public void run() {
-						swipeLayout.setRefreshing(false);
-					}
-				}, 4000);
-				
+				viewer.reload();
+				/*
+				 * new Handler().postDelayed(new Runnable() {
+				 * 
+				 * @Override public void run() {
+				 * swipeLayout.setRefreshing(false); } }, 4000);
+				 */
+
 			}
 		});
 		super.onViewCreated(view, savedInstanceState);
 	}
 
-	public int getTabId() {
-		return tab.getId();
+	public void toggleSwipe(String url) {
+		Uri uri = Uri.parse(url);
+		String refreshable = uri.getQueryParameter("_refreshable");
+		if (refreshable == null) {
+			mRefreshable = false;
+			swipeLayout.setEnabled(false);
+		} else if (refreshable.contains("true")) {
+			mRefreshable = true;
+			swipeLayout.setEnabled(true);
+		}
 	}
 
-	void showBack() {
-		back.setVisibility(View.VISIBLE);
+	public void auth_facebook() {
+		String url = "https://graph.facebook.com/me";
+		aq.auth(handle).ajax(url, JSONObject.class, this, "facebookCb");
+
 	}
 
-	void hideBack() {
-		back.setVisibility(View.INVISIBLE);
+	public void facebookCb(String url, JSONObject json, AjaxStatus status) {
+
+		if (json != null) {
+			Log.d(LOG_TAG, json.toString());
+			showVideo(video);
+		} else {
+			// ajax error
+		}
+
 	}
+
+	String video;
 
 	public void executeJS(Uri command) {
 		if (command.getHost().equals("video")) {
-			showVideo(command.getQueryParameter("v"));
+			if (!handle.authenticated())
+				auth_facebook();
+			else
+				showVideo(command.getQueryParameter("v"));
+			video = command.getQueryParameter("v");
 		}
 
 		if (command.getHost().equals("buy")) {
@@ -202,6 +241,8 @@ public class ContentFragment extends Fragment implements OnClickListener,
 			getGeolocation(command);
 		}
 		if (command.getHost().equals("ready")) {
+			if (swipeLayout.isRefreshing())
+				swipeLayout.setRefreshing(false);
 			/*
 			 * if (progress.isShowing()) progress.dismiss();
 			 */
@@ -211,11 +252,11 @@ public class ContentFragment extends Fragment implements OnClickListener,
 			showInput(command);
 		}
 	}
-	
 
 	public void showInput(final Uri uri) {
-		/*if (mInputShow)
-			return;*/
+		/*
+		 * if (mInputShow) return;
+		 */
 		input.setVisibility(mVisible);
 		tabs_lay.setVisibility(mGone);
 		mInputShow = true;
@@ -230,7 +271,8 @@ public class ContentFragment extends Fragment implements OnClickListener,
 					input.setText("");
 					input.setVisibility(mGone);
 					tabs_lay.setVisibility(mVisible);
-					imm.toggleSoftInput(InputMethodManager.HIDE_IMPLICIT_ONLY, 0);
+					imm.toggleSoftInput(InputMethodManager.HIDE_IMPLICIT_ONLY,
+							0);
 					mInputShow = !mInputShow;
 				}
 
@@ -255,57 +297,38 @@ public class ContentFragment extends Fragment implements OnClickListener,
 		});
 	}
 
+	private void performJS(Uri uri, String target) {
+		String function = null;
+		if (uri.getQueryParameter("_reject") != null) {
+			function = "javascript:" + uri.getQueryParameter("_reject") + "('"
+					+ target + "');";
+			viewer.loadUrl(function);
+		}
+		if (uri.getQueryParameter("_resolve") != null) {
+			function = "javascript:" + uri.getQueryParameter("_resolve") + "('"
+					+ target + "');";
+			viewer.loadUrl(function);
+		}
+	}
+
 	public void getGeolocation(Uri uri) {
 		mGps = true;
 		if (Gps.getInstance(getActivity()) == null)
 			return;
-		String function = null;
-		if (uri.getQueryParameter("_reject") != null) {
-			function = "javascript:" + uri.getQueryParameter("_reject") + "('"
-					+ Gps.getLocation() + "');";
-			viewer.loadUrl(function);
-		}
-		if (uri.getQueryParameter("_resolve") != null) {
-			function = "javascript:" + uri.getQueryParameter("_resolve") + "('"
-					+ Gps.getLocation() + "');";
-			viewer.loadUrl(function);
-		}
+		performJS(uri, Gps.getLocation());
 	}
-	
 
 	public void getDeviceId(Uri uri) {
-		String function = null;
 		String android_id = Secure.getString(
 				getActivity().getContentResolver(), Secure.ANDROID_ID);
-		if (uri.getQueryParameter("_reject") != null) {
-			function = "javascript:" + uri.getQueryParameter("_reject") + "('"
-					+ android_id + "');";
-			viewer.loadUrl(function);
-		}
-		if (uri.getQueryParameter("_resolve") != null) {
-			function = "javascript:" + uri.getQueryParameter("_resolve") + "('"
-					+ android_id + "');";
-			viewer.loadUrl(function);
-		}
+		performJS(uri, android_id);
 	}
 
 	public void buy(Uri uri) {
-		String function = null;
-		if (uri.getQueryParameter("_reject") != null) {
-			function = "javascript:" + uri.getQueryParameter("_reject") + "('"
-					+ uri.getQueryParameter("id") + "');";
-			viewer.loadUrl(function);
-		}
-		if (uri.getQueryParameter("_resolve") != null) {
-			function = "javascript:" + uri.getQueryParameter("_resolve") + "('"
-					+ uri.getQueryParameter("id") + "');";
-			viewer.loadUrl(function);
-		}
+		performJS(uri, uri.getQueryParameter("id"));
 	}
 
 	public void showVideo(String path) {
-		// path = path.substring(0, path.indexOf(","));
-		//this.path = path;
 		Intent intent = new Intent(getActivity(), VideoPlayerActivity.class);
 		intent.putExtra("data", path);
 		startActivity(intent);
@@ -314,20 +337,17 @@ public class ContentFragment extends Fragment implements OnClickListener,
 	class MyWebViewClient extends WebViewClient {
 		@Override
 		public void onPageStarted(WebView view, String url, Bitmap favicon) {
-			// TODO Auto-generated method stub
 			Uri uri = Uri.parse(url);
-			if (isMenuOpen)
-				hideMenu();
+			hideMenu();
 			isReady = false;
 			if (uri.getQueryParameter("_target") != null) {
-				// TODO Change tab
 				Tab t = src.findTabByName(uri.getQueryParameter("_target"));
 				if ((t != null) && (t.getId() != tab.getId())) {
 					return;
 				}
 			}
 			progress.setCancelable(false);
-			// progress.show(getFragmentManager(), "progress");
+			progress.show(getFragmentManager(), "progress");
 			super.onPageStarted(view, url, favicon);
 		}
 
@@ -341,7 +361,6 @@ public class ContentFragment extends Fragment implements OnClickListener,
 			}
 			if (tab.getDomain().contains(uri.getHost())) {
 				if (uri.getQueryParameter("_target") != null) {
-					// TODO Change tab
 					Tab t = src.findTabByName(uri.getQueryParameter("_target"));
 					if (t != null) {
 						t.setSecondUrl(uri.toString());
@@ -353,7 +372,6 @@ public class ContentFragment extends Fragment implements OnClickListener,
 
 				}
 				tab.addUrl(url);
-				showBack();
 				return false;
 			} else {
 				Intent i = new Intent(Intent.ACTION_VIEW, uri);
@@ -365,17 +383,31 @@ public class ContentFragment extends Fragment implements OnClickListener,
 
 		@Override
 		public void onPageFinished(WebView view, String url) {
-			// TODO Auto-generated method stub
+			toggleSwipe(url);
+			log("Page is loaded");
 			Uri uri = Uri.parse(url);
-			if (uri.getQueryParameter("_title") != null)
-				title.setText(resizeTitle(uri.getQueryParameter("_title")));
+			if (src.getSelectTab().getSizeOfUrl() == 0) {
+				aq.id(mBackId).invisible();
+				aq.id(R.id.imageView1).visible();
+			} else {
+				aq.id(mBackId).visible();
+				aq.id(R.id.imageView1).invisible();
+			}
+			if (tab.getDomain().contains(uri.getHost()))
+				if (uri.getQueryParameter("_title") != null)
+					title.setText(resizeTitle(uri.getQueryParameter("_title")));
 			super.onPageFinished(view, url);
 		}
 
 	}
 
+	void log(String s) {
+		Log.d("logs", s);
+	}
+
 	public interface onChangeTab {
 		public void changeTab(Tab tab);
+
 		public void showMenu();
 	}
 
@@ -411,60 +443,54 @@ public class ContentFragment extends Fragment implements OnClickListener,
 			viewer.requestFocus();
 		switch (v.getId()) {
 		case R.id.back:
+			aq.id(mBackId).invisible();
+			aq.id(R.id.imageView1).image(R.drawable.close);
 			tab.popUrl();
-			if (tab.getSizeOfUrl() != 0) {
-				viewer.loadUrl(tab.getLastUrl());
-				title.setText(resizeTitle(viewer.getTitle()));
-			} else {
-				if (tab.getSecondUrl() == null) {
-					viewer.loadUrl(tab.getDomain() + tab.getUrl());
-					title.setText(resizeTitle(tab.getTitle()));
-				} else {
-					viewer.loadUrl(tab.getSecondUrl());
-					title.setText(tab.getMenuTittleByUrl(tab.getSecondUrl()));
-				}
-				hideBack();
-			}
+			chooseLoad();
 			break;
-		case R.id.menu:
-			// changeTabListener.showMenu();
-
-			return;
+		case R.id.title_layout:
 		case R.id.title:
-			Log.d("logs", "Click title");
-			// viewer.scrollTo(0, 0);
-			//if (showHideMenu())
-			showHideMenu();
-				return;
-			//break;
+			if (aq.id(mBackId).getImageView().getVisibility() != View.VISIBLE) {
+				linearLayoutPopup.toggle();
+				if (linearLayoutPopup.isVisible())
+					aq.id(R.id.imageView1).image(R.drawable.open);
+				else
+					aq.id(R.id.imageView1).image(R.drawable.close);
+			}
+			return;
 		default:
 			break;
 		}
-		hideMenu();
-		// TODO Auto-generated method stub
+		linearLayoutPopup.hide();
 	}
-	
-	public boolean showHideMenu() {
-		if (linearLayoutPopup.getVisibility() == View.INVISIBLE) {
-			linearLayoutPopup.startAnimation(popupShow); // показываем
-			isMenuOpen = true;
-		} else {
-			linearLayoutPopup.startAnimation(popupHide); // пр€чем
-			isMenuOpen = false;
-		}
-		return isMenuOpen;
+
+	public void showHideHeader() {
+		header.show();
 	}
 
 	public void hideMenu() {
-		if (isMenuOpen)
-			title.performClick();
+		aq.id(R.id.imageView1).image(R.drawable.close);
+		linearLayoutPopup.hide();
+	}
+
+	public void loadPage(String s) {
+		if (viewer == null)
+			return;
+		viewer.loadUrl(s);
+		toggleSwipe(s);
 	}
 
 	public void ConstructMenu(ArrayList<Menu> menus) {
 		Log.d("logs", "construct menu");
 		for (Menu menu : menus) {
 			final Menu m = menu;
-			TextView text = new TextView(getActivity().getApplicationContext());
+			final TextView text = new TextView(getActivity()
+					.getApplicationContext());
+			if (src.getSelectTab().getSecondUrl() != null)
+				if (menu.getTitle().contains(
+						src.getSelectTab().getMenuTittleByUrl(
+								src.getSelectTab().getSecondUrl())))
+					text.setBackgroundColor(src.getTabBarSelectionColor());
 			text.setText(menu.getTitle());
 			text.setTextSize((float) 20.0);
 			text.setPadding(0, 20, 0, 20);
@@ -476,14 +502,17 @@ public class ContentFragment extends Fragment implements OnClickListener,
 
 				@Override
 				public void onClick(View v) {
+					linearLayoutPopup.repaintChild(src.getTabBarBgColor());
+					text.setBackgroundColor(src.getTabBarSelectionColor());
 					src.getSelectTab().setSecondUrl(
 							src.getDomain() + m.getUrl());
 					src.getSelectTab().setCurrentTitle(m.getTitle());
 					tab.removeStack();
-					viewer.loadUrl(src.getDomain() + m.getUrl());
+					loadPage(src.getDomain() + m.getUrl());
 					title.setText(m.getTitle());
-					//title.performClick();
-					showHideMenu();
+					aq.id(R.id.imageView1).image(R.drawable.close);
+					linearLayoutPopup.hide();
+
 				}
 			});
 			linearLayoutPopup.addView(text);
@@ -492,36 +521,6 @@ public class ContentFragment extends Fragment implements OnClickListener,
 					1));
 			devider.setBackgroundColor(Color.BLACK);
 			linearLayoutPopup.addView(devider);
-		}
-	}
-
-	@Override
-	public void onAnimationEnd(Animation animation) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void onAnimationRepeat(Animation animation) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void onAnimationStart(Animation animation) {
-		// TODO Auto-generated method stub
-		Log.d("logs", "start anim");
-		if (animation.equals(popupShow)) {
-			linearLayoutPopup.setVisibility(View.VISIBLE);
-			for(int i =0; i < linearLayoutPopup.getChildCount(); i++)
-				linearLayoutPopup.getChildAt(i).setClickable(true);
-			title.setText(title.getText() + " v");
-		} else if (animation.equals(popupHide)) {
-			linearLayoutPopup.setVisibility(View.INVISIBLE);
-			for(int i =0; i < linearLayoutPopup.getChildCount(); i++)
-				linearLayoutPopup.getChildAt(i).setClickable(false);
-			title.setText(title.getText().subSequence(0,
-					title.getText().length() - 2));
 		}
 	}
 
@@ -596,9 +595,4 @@ public class ContentFragment extends Fragment implements OnClickListener,
 
 	}
 
-	@Override
-	public void onFocusChange(View v, boolean hasFocus) {
-		// TODO Auto-generated method stub
-		Log.d("logs", "View: "+v.getId()+" Focus: "+hasFocus);
-	}
 }

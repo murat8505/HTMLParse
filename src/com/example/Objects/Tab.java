@@ -9,6 +9,7 @@ import com.example.tntapp.ContentFragment;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.net.Uri;
 
 
 
@@ -19,7 +20,6 @@ import android.app.Activity;
 	String name;
 	String domain;
 	String secondUrl = null;
-	public int scrollPosition = 0;
 	int id;
 	ContentFragment fragment;
 	Stack<String> links;
@@ -53,6 +53,11 @@ import android.app.Activity;
 
 
 	public String getCurrentTitle() {
+		/*Uri uri;
+		if (getSizeOfUrl()>0) {
+			uri = Uri.parse(getLastUrl());
+			uri.getQueryParameter("")
+		}*/
 		return currentTitle;
 	}
 
@@ -83,14 +88,6 @@ import android.app.Activity;
 	
 	public void setId(int _id) {
 		id = _id;
-	}
-	
-	public void setScrollPosition(int s) {
-		scrollPosition = s;
-	}
-	
-	public int getScrollPosition() {
-		return scrollPosition;
 	}
 	
 	public void setUrl(String url) {

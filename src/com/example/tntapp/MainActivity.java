@@ -6,21 +6,19 @@ import android.app.Activity;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
-import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.ActionBarActivity;
-import android.support.v7.internal.widget.ListPopupWindow;
 import android.view.Gravity;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.Window;
+import android.view.WindowManager;
 import android.webkit.WebView;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.example.Objects.Menu;
 import com.example.Objects.Screen;
 import com.example.Objects.Tab;
 import com.example.tntapp.ContentFragment.onChangeTab;
@@ -30,7 +28,8 @@ import com.squareup.picasso.Picasso;
 public class MainActivity extends ActionBarActivity implements OnClickListener, onChangeTab {
 	Screen source;
 	public static Activity 		mActivity;
-	int 						matchParent = LinearLayout.LayoutParams.MATCH_PARENT;
+	int 						matchParent = LinearLayout.LayoutParams.MATCH_PARENT,
+								wrapContent = LinearLayout.LayoutParams.WRAP_CONTENT;
 	FragmentTransaction 		fTrans;
 	LinearLayout 				ll;
 	DialogFragment 				menuDialog;
@@ -42,7 +41,6 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
         	setContentView(R.layout.activity_connect_error);
         	Button b = (Button)findViewById(R.id.refresh_ntwrk);
         	b.setOnClickListener(new OnClickListener() {
-				
 				@Override
 				public void onClick(View v) {
 					if (cd.isConnectingToInternet())
@@ -78,6 +76,7 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 	
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+    	this.requestWindowFeature(Window.FEATURE_NO_TITLE);
         super.onCreate(savedInstanceState);
         cd = new ConnectionDetector(getApplicationContext());
         if (!checkNetwork(savedInstanceState))
@@ -102,9 +101,13 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 	void createTab(final Tab tab) {
 		LinearLayout.LayoutParams lParams = new LinearLayout.LayoutParams(
 				matchParent, matchParent);
+		LinearLayout.LayoutParams lParamsImg = new LinearLayout.LayoutParams(
+				matchParent, wrapContent);
 		lParams.weight = 1;
+		lParamsImg.gravity = Gravity.CENTER;
 		final LinearLayout newll = new LinearLayout(this);
 		newll.setOrientation(LinearLayout.VERTICAL);
+		newll.setPadding(20, 20, 20, 20);
 		newll.setBackgroundColor(source.getTabBarBgColor());
 		int id = tab.getId();
 		newll.setId(id);
@@ -131,7 +134,7 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 		Picasso.with(this).load(tab.getDomain() + tab.getIcon())
 				//.resize(metrics.heightPixels / 15, metrics.heightPixels / 15)
 				.into(imgView);
-		newll.addView(imgView, lParams);
+		newll.addView(imgView, lParamsImg);
 		TextView txtTitle = new TextView(this);
 		txtTitle.setGravity(Gravity.CENTER);
 		txtTitle.setTextSize(16);
@@ -141,6 +144,7 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 	}
 	@SuppressWarnings("unused")
 	private void rePaintTabs() {
+		
 		int childCount = ll.getChildCount();
 		for (int k = 0; k < childCount; k++) {
 			ll.getChildAt(k).setBackgroundColor(source.getTabBarBgColor());
@@ -169,15 +173,17 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 	@Override
 	public void onClick(View v) {
 		source.setSelectTab(v.getId());
-		Fragment currentFrag = getSupportFragmentManager().findFragmentById(R.id.container);
-		Fragment fr = source.getSelectTab().getFragment();
+		ContentFragment currentFrag = (ContentFragment) getSupportFragmentManager().findFragmentById(R.id.container);
+		ContentFragment fr = source.getSelectTab().getFragment();
 		fTrans = getSupportFragmentManager().beginTransaction();
 		if (currentFrag==source.getSelectTab().getFragment()) {
+			currentFrag.showHideHeader();
 			if (source.getSelectTab().getSecondUrl()!=null) {
 				source.getSelectTab().removeStack();
 				source.getSelectTab().setSecondUrl(null);
 				fTrans.detach(currentFrag);
 				fTrans.attach(currentFrag);
+				
 			}
 		} else {
 			WebView viewer = (WebView)currentFrag.getView().findViewById(R.id.viewer);
@@ -186,14 +192,12 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 		}
 		fTrans.commit();
 		rePaintTabs();
-		
 	}
 
-
+	
 	@Override
 	public void changeTab(Tab tab) {
 		onClick(findViewById(tab.getId()));
-		
 	}
 
 
@@ -204,5 +208,6 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 		menuDialog.setArguments(b);
 		menuDialog.show(getSupportFragmentManager(), "menuDialog");
 	}
+	
 
 }
