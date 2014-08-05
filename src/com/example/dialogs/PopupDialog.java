@@ -1,4 +1,4 @@
-package com.example.tntapp;
+package com.example.dialogs;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
@@ -14,6 +14,10 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 
 import com.androidquery.AQuery;
+import com.example.tntapp.R;
+import com.example.tntapp.R.id;
+import com.example.tntapp.R.layout;
+import com.example.tntapp.R.style;
 import com.squareup.picasso.Picasso;
 
 @SuppressLint("ValidFragment") public class PopupDialog extends DialogFragment {

@@ -1,4 +1,4 @@
-package com.example.tntapp;
+package com.example.utils;
 
 import android.content.Context;
 import android.net.ConnectivityManager;
@@ -16,6 +16,8 @@ public class ConnectionDetector {
      * Checking for all possible internet providers
      * **/
     public boolean isConnectingToInternet(){
+    	if (_context == null)
+    		return true;
         ConnectivityManager connectivity = (ConnectivityManager) _context.getSystemService(Context.CONNECTIVITY_SERVICE);
           if (connectivity != null)
           {

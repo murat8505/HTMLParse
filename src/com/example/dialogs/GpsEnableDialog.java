@@ -1,4 +1,7 @@
-package com.example.tntapp;
+package com.example.dialogs;
+
+import com.example.tntapp.R;
+import com.example.tntapp.R.string;
 
 import android.app.AlertDialog;
 import android.app.Dialog;

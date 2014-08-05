@@ -5,7 +5,7 @@ import java.util.Random;
 import java.util.Stack;
 import java.util.UUID;
 
-import com.example.tntapp.ContentFragment;
+import com.example.fragments.ContentFragment;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -21,15 +21,8 @@ import android.net.Uri;
 	String domain;
 	String secondUrl = null;
 	int id;
-	ContentFragment fragment;
 	Stack<String> links;
 	ArrayList<Menu> menu;
-	
-	Activity activ;
-	
-	public ContentFragment getFragment() {
-		return fragment;
-	}
 	
 	public String getMenuTittleByUrl (String url) {
 		for (Menu m : menu) {
@@ -143,7 +136,6 @@ import android.net.Uri;
 	
 	public Tab(String _domain) {
 		domain = _domain;
-		fragment = new ContentFragment();
 		id = Math.abs(new Random().nextInt());
 		links = new Stack<String>();
 	}

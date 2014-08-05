@@ -6,13 +6,25 @@
     tools:ignore="MergeRootFrame" >
 
     <FrameLayout
-        android:id="@+id/container"
         android:layout_width="match_parent"
-        android:layout_above="@+id/tabs"
         android:layout_height="match_parent"
-        >
-    </FrameLayout>
+        android:layout_above="@+id/tabs" >
 
+        <FrameLayout
+            android:id="@+id/container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_above="@+id/tabs" >
+        </FrameLayout>
+
+        <ImageView
+            android:id="@+id/button111"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_gravity="bottom"
+            android:layout_marginTop="-25dp"
+            android:src="@drawable/triangle" />
+    </FrameLayout>
 
     <RelativeLayout
         android:id="@id/tabs"
@@ -29,17 +41,18 @@
             android:orientation="horizontal" >
         </LinearLayout>
     </RelativeLayout>
-    
+
     <EditText
         android:id="@+id/input"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:visibility="gone"
-        android:singleLine="true"
+        android:ems="10"
+        android:layout_alignParentBottom="true"
         android:imeActionId="@+id/action_sign_in"
-    	android:imeActionLabel="Meow"
+        android:imeActionLabel="Meow"
         android:imeOptions="actionDone"
-        android:ems="10" >
+        android:singleLine="true"
+        android:visibility="gone" >
     </EditText>
 
 </RelativeLayout>

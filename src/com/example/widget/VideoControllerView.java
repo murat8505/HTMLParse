@@ -1,4 +1,4 @@
-package com.example.tntapp;
+package com.example.widget;
 
 /*
  * Copyright (C) 2006 The Android Open Source Project
@@ -34,6 +34,7 @@ import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
+import android.widget.MediaController;
 import android.widget.ProgressBar;
 import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
@@ -42,6 +43,11 @@ import android.widget.TextView;
 import java.lang.ref.WeakReference;
 import java.util.Formatter;
 import java.util.Locale;
+
+import com.example.tntapp.R;
+import com.example.tntapp.R.drawable;
+import com.example.tntapp.R.id;
+import com.example.tntapp.R.layout;
 
 
 /**
@@ -72,7 +78,7 @@ import java.util.Locale;
  *   with the boolean set to false
  * </ul>
  */
-public class VideoController extends FrameLayout {
+public class VideoControllerView extends FrameLayout {
     private static final String TAG = "VideoControllerView";
     
     private MediaPlayerControl  mPlayer;
@@ -82,7 +88,7 @@ public class VideoController extends FrameLayout {
     private View                mRoot;
     private ProgressBar         mProgress;
     private SeekBar         	mProgressVolume;
-    private TextView            mEndTime, mCurrentTime;
+    private TextView            mEndTime, mCurrentTime, mTitle;
     private boolean             mShowing;
     private boolean             mDragging;
     private static final int    sDefaultTimeout = 3000;
@@ -104,7 +110,7 @@ public class VideoController extends FrameLayout {
     private int 				currentVolume, mMaxVolume;
     private Handler             mHandler = new MessageHandler(this);
 
-    public VideoController(Context context, AttributeSet attrs) {
+    public VideoControllerView(Context context, AttributeSet attrs) {
         super(context, attrs);
         mRoot = null;
         mContext = context;
@@ -113,15 +119,15 @@ public class VideoController extends FrameLayout {
         Log.i(TAG, TAG);
     }
 
-    public VideoController(Context context, boolean useFastForward) {
+    public VideoControllerView(Context context, boolean useFastForward) {
         super(context);
         mContext = context;
         mUseFastForward = useFastForward;
         Log.i(TAG, TAG);
     }
 
-    public VideoController(Context context, MediaPlayer mPlayer) {
-        this(context, true);
+    public VideoControllerView(Context context, MediaPlayer mPlayer, boolean useFastForward) {
+        this(context, useFastForward);
         mMuteEnabled = true;
         mMediaPlayer = mPlayer;
         //am = (AudioManager)context.getSystemService(Context.AUDIO_SERVICE);
@@ -233,7 +239,9 @@ public class VideoController extends FrameLayout {
             mProgressVolume.setMax(100);
             mProgressVolume.setProgress(100);
         }
-
+        
+        mTitle = (TextView) v.findViewById(R.id.videoTitle);
+        mTitle.setText("Видео");
         mEndTime = (TextView) v.findViewById(R.id.time);
         mCurrentTime = (TextView) v.findViewById(R.id.time_current);
         mFormatBuilder = new StringBuilder();
@@ -248,6 +256,11 @@ public class VideoController extends FrameLayout {
      */
     public void show() {
         show(sDefaultTimeout);
+    }
+    
+    public void setVideoTitle(String title) {
+    	if (mTitle != null)
+    	mTitle.setText(title);
     }
 
     /**
@@ -487,14 +500,14 @@ public class VideoController extends FrameLayout {
         }
         
         if (mMuteEnabled) {
-            mFullscreenButton.setImageResource(R.drawable.ic_volume);
+            mFullscreenButton.setImageResource(R.drawable.ic_volume_small);
             mProgressVolume.setProgress(currentVolume);
             mMediaPlayer.setVolume((float)currentVolume/100, (float)currentVolume/100);
             //am.setStreamVolume(AudioManager.STREAM_MUSIC,
 					//currentVolume, 0);
         }
         else {
-            mFullscreenButton.setImageResource(R.drawable.ic_volume_off);
+            mFullscreenButton.setImageResource(R.drawable.ic_volume_off_small);
             mProgressVolume.setProgress(0);
             mMediaPlayer.setVolume(0, 0);
             /*am.setStreamVolume(AudioManager.STREAM_MUSIC,
@@ -725,14 +738,14 @@ public class VideoController extends FrameLayout {
     }
     
     private static class MessageHandler extends Handler {
-        private final WeakReference<VideoController> mView; 
+        private final WeakReference<VideoControllerView> mView; 
 
-        MessageHandler(VideoController view) {
-            mView = new WeakReference<VideoController>(view);
+        MessageHandler(VideoControllerView view) {
+            mView = new WeakReference<VideoControllerView>(view);
         }
         @Override
         public void handleMessage(Message msg) {
-            VideoController view = mView.get();
+            VideoControllerView view = mView.get();
             if (view == null || view.mPlayer == null) {
                 return;
             }

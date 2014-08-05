@@ -7,7 +7,9 @@
     <string name="no">Нет</string>
     <string name="yes">Да</string>
     <string name="message_text">Включить GPS?</string>
-    <string name="config_link">http://tnt-club.finch.fm/media/static/tnt-club-mobile-demos/configuration_ios_v1.json</string>
+    <string name="config_link">http://public.webdeveloperlab.ru/nativeshell_android/configuration.json</string>
+    <string name="config_link3">http://tnt-club.finch.fm/media/static/tnt-club-mobile-demos/configuration_ios_v1.json</string>
+    <string name="config_link2">http://tnt-club.finch.fm/media/static/tnt-club-mobile-demos/configuration_android_dev.json</string>
     <string name="refresh">Обновить</string>
     <string name="loading">Загрузка</string>
     <string name="loading_info">Подождите, информация загружается</string>
@@ -15,8 +17,14 @@
     <string name="play">►</string>
     <string name="pause">||</string>
     <string name="volume_up">+</string>
+    <string name="send_to">Поделиться через...</string>
     <string name="volume_down">-</string>
     <string name="exit">Exit</string>
     <string name="description">Element of control</string>
+    <string name="input_title">Ввод текста</string>
+    <string name="input_cancel">Отмена</string>
+    <string name="input_publish">Публиковать</string>
+    <string name="input_hint">Введите текст...</string>
+    <string name="btn_showinput_text">Вызвать окно ввода</string>
     <string name="network_off">Отсутствует соединение с интернетом</string>
 </resources>

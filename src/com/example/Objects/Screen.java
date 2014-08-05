@@ -13,6 +13,7 @@ import org.json.JSONObject;
 
 
 
+
 import com.example.tntapp.R;
 
 import android.annotation.SuppressLint;
@@ -61,12 +62,12 @@ public class Screen implements Serializable {
 	int tabBarSelectionColor;
 	int headerColor;
 	Tab selectTab, curTab;
-	boolean secondClick;
+	private boolean isReady = false; 
 	public static final String TAG = "Screen";
 	private static Screen instance = null;
 
-	public static Screen getInstance(Activity ctx) {
-		context = ctx.getApplicationContext();
+	public static synchronized Screen getInstance(Context context2) {
+		context = context2.getApplicationContext();
 		if (instance == null) {
 			instance = new Screen();
 		}
@@ -80,17 +81,25 @@ public class Screen implements Serializable {
 		}
 		return null;
 	}
+	
+	public boolean isReady() {
+		return isReady;
+	}
 
 	public String getSplashUrl() {
 		return splashUrl;
+	}
+	
+	public Tab getFirstTab() {
+		return tabs.get(0);
 	}
 
 	private Screen() {
 		Config config = Config.getInstance(context);
 		String result = null;
 		result = config.getResult();
-		init(result);
-		selectTab = tabs.get(0);
+		init(result); 
+		selectTab = null;
 	}
 
 	public String getDomain() {
@@ -191,9 +200,9 @@ public class Screen implements Serializable {
 					+ colors.getString(TAB_SEL_BACK_COLOR).toUpperCase());
 			headerColor = Color.parseColor("#"
 					+ colors.getString(HEAD_COLOR).toUpperCase());
+			isReady = true;
 		} catch (Exception e) {
 			Log.d("logs", "Что-то пошло не так в обработке джейсона");
-			Log.d("logs", e.getMessage());
 			e.printStackTrace();
 		}
 	}

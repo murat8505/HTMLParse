@@ -3,6 +3,8 @@ package com.example.tntapp;
 import java.io.IOException;
 import java.util.Stack;
 
+import com.example.widget.VideoControllerView;
+
 import android.app.Activity;
 import android.content.Context;
 import android.content.pm.ActivityInfo;

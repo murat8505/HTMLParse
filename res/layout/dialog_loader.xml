@@ -4,7 +4,7 @@
     android:layout_height="match_parent" >
 
     <ProgressBar
-        android:id="@+id/progressBar1"
+        android:id="@+id/progressLoading"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
@@ -17,7 +17,7 @@
         android:id="@+id/playstop"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/progressBar1"
+        android:layout_below="@+id/progressLoading"
         android:layout_centerHorizontal="true"
         android:layout_marginBottom="16dp"
         android:text="@string/refresh"
@@ -29,8 +29,8 @@
         android:id="@+id/info"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignTop="@+id/progressBar1"
-        android:layout_toRightOf="@+id/progressBar1"
+        android:layout_alignTop="@+id/progressLoading"
+        android:layout_toRightOf="@+id/progressLoading"
         android:text="@string/loading_info"
         android:textAppearance="?android:attr/textAppearanceMedium" />
 
